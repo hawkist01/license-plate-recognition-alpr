@@ -28,10 +28,3 @@ This project implements an advanced License Plate Recognition (LPR) pipeline usi
 ```bash
 pip install -q opencv-python-headless ultralytics deep_sort_realtime paddleocr pytesseract scikit-learn joblib
 
-Also install Tesseract if not available:
-```bash
- sudo apt-get install -y tesseract-ocr
-
-
-vehicle_images/: Cropped snapshots of tracked vehicles
-
