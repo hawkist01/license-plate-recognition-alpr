@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LPR Web Viewer</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        #container { 
+            display: flex; 
+            flex-wrap: wrap; /* Allow wrapping for smaller screens */
+            gap: 20px; 
+            align-items: flex-start; /* Align items to the top */
+        }
+        #image-container { 
+            border: 1px solid #ccc; 
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        #data-container { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            width: 350px; /* Slightly wider */
+            min-height: 200px; /* Minimum height */
+            background-color: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        img#annotated-image { 
+            max-width: 640px; 
+            height: auto; /* Maintain aspect ratio */
+            display: block; /* Remove extra space below image */
+        }
+        h1 {
+            color: #555;
+        }
+        h2 {
+            color: #444;
+            margin-top: 0;
+        }
+        pre#plate-data {
+            white-space: pre-wrap; /* Wrap long lines */
+            word-wrap: break-word; /* Break long words */
+            font-size: 0.9em;
+            background-color: #e9e9e9;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>License Plate Recognition Viewer</h1>
+    <div id="container">
+        <div id="image-container">
+            <img id="annotated-image" src="/api/annotated_image" alt="Annotated Stream">
+        </div>
+        <div id="data-container">
+            <h2>Latest Plate Data</h2>
+            <pre id="plate-data">Loading data...</pre>
+        </div>
+    </div>
+
+    <script>
+        const plateDataElement = document.getElementById('plate-data');
+        const annotatedImageElement = document.getElementById('annotated-image');
+        // Assuming backend is on the same host and default Flask port (5000)
+        // No need to specify http://localhost:5000 if served from the same origin
+        const backendApiHost = ''; 
+
+        async function fetchPlateData() {
+            try {
+                const response = await fetch(backendApiHost + '/api/latest_plate');
+                if (!response.ok) {
+                    if (response.status === 404) {
+                         plateDataElement.textContent = 'Plate data endpoint not found.';
+                    } else {
+                         plateDataElement.textContent = `Error fetching plate data: ${response.status} ${response.statusText}`;
+                    }
+                    return;
+                }
+                const data = await response.json();
+
+                // Check if the data object is empty (e.g., initial state from backend "{}")
+                if (Object.keys(data).length === 0 || data === null || data === undefined) {
+                    plateDataElement.textContent = 'No plate data received yet.';
+                } else {
+                    // Format confidence to two decimal places if it exists
+                    let confidenceStr = 'N/A';
+                    if (data.confidence !== undefined && data.confidence !== null) {
+                        confidenceStr = (parseFloat(data.confidence) * 100).toFixed(2) + '%';
+                    }
+
+                    plateDataElement.textContent = 
+                        `Plate:      ${data.plate_text || 'N/A'}
+` +
+                        `Confidence: ${confidenceStr}
+` +
+                        `Timestamp:  ${data.timestamp || 'N/A'}
+` +
+                        `Vehicle ID: ${data.vehicle_id || 'N/A'}`;
+                }
+            } catch (error) {
+                console.error('Error fetching or parsing plate data:', error);
+                plateDataElement.textContent = 'Failed to connect to backend or parse data.';
+            }
+        }
+
+        function refreshAnnotatedImage() {
+            // Append a timestamp to the image URL to prevent caching
+            annotatedImageElement.src = backendApiHost + '/api/annotated_image?timestamp=' + new Date().getTime();
+        }
+
+        // Handle image loading errors
+        annotatedImageElement.onerror = function() {
+            console.warn('Error loading annotated image. It might not be available yet or backend is down.');
+            // Optionally, display a placeholder or error message on the image itself
+            // annotatedImageElement.alt = 'Annotated stream currently unavailable.';
+        };
+
+        // Initial calls to load data and image as soon as the page loads
+        fetchPlateData();
+        refreshAnnotatedImage(); // Call to ensure the ?timestamp is added initially
+
+        // Set up periodic refresh
+        const refreshInterval = 1000; // milliseconds (1 second)
+        setInterval(fetchPlateData, refreshInterval);
+        setInterval(refreshAnnotatedImage, refreshInterval);
+    </script>
+</body>
+</html>

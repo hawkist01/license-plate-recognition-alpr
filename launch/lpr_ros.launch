@@ -1,0 +1,25 @@
+<launch>
+
+    <!-- Arguments for dynamic parameter setting from command line -->
+    <arg name="input_image_topic_arg" default="/camera/image_raw" />
+    <arg name="annotated_image_topic_arg" default="/lpr/annotated_image" />
+    <arg name="license_plate_data_topic_arg" default="/lpr/license_plate_data" />
+    <arg name="skip_frames_arg" default="3" />
+    <arg name="use_dashboard_arg" default="false" />
+    <arg name="dashboard_url_arg" default="http://localhost:8000/alpr_app/default/call/json/message" />
+    <arg name="target_detection_size_w_arg" default="640" />
+    <arg name="target_detection_size_h_arg" default="480" /> <!-- Default from prompt -->
+
+    <!-- LPR ROS Node -->
+    <node name="lpr_node" pkg="lpr_package" type="lpr_ros_node.py" output="screen">
+        <param name="input_image_topic" value="$(arg input_image_topic_arg)" />
+        <param name="annotated_image_topic" value="$(arg annotated_image_topic_arg)" />
+        <param name="license_plate_data_topic" value="$(arg license_plate_data_topic_arg)" />
+        <param name="skip_frames" value="$(arg skip_frames_arg)" />
+        <param name="use_dashboard" value="$(arg use_dashboard_arg)" />
+        <param name="dashboard_url" value="$(arg dashboard_url_arg)" />
+        <param name="target_detection_size_w" value="$(arg target_detection_size_w_arg)" />
+        <param name="target_detection_size_h" value="$(arg target_detection_size_h_arg)" />
+    </node>
+
+</launch>
